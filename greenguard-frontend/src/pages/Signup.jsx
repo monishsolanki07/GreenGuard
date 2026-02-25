@@ -26,7 +26,7 @@ function Signup() {
       });
       localStorage.setItem("access_token", loginResponse.data.access);
       localStorage.setItem("refresh_token", loginResponse.data.refresh);
-      navigate("/dashboard");
+      navigate("/company/dashboard");
     } catch (err) {
       if (err.response?.data?.username) {
         setError("Username already exists.");

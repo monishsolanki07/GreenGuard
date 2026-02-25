@@ -23,7 +23,13 @@ function Login() {
       localStorage.setItem("access_token", response.data.access);
       localStorage.setItem("refresh_token", response.data.refresh);
 
-      navigate("/dashboard");
+      const decoded = JSON.parse(atob(response.data.access.split(".")[1]));
+
+if (decoded.role === "ADMIN") {
+  navigate("/admin/dashboard");
+} else {
+  navigate("/company/dashboard");
+}
     } catch (error) {
       setError("Invalid credentials. Please try again.");
     } finally {

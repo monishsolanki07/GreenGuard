@@ -17,11 +17,11 @@ function Navbar() {
     navigate("/");
   };
 
-  const navLinks = [
-    { to: "/dashboard", label: "Dashboard", icon: "⬡" },
-    { to: "/upload", label: "Upload", icon: "↑" },
-    { to: "/history", label: "History", icon: "◷" },
-  ];
+ const navLinks = [
+  { to: "/company/dashboard", label: "Dashboard", icon: "⬡" },
+  { to: "/company/upload", label: "Upload", icon: "↑" },
+  { to: "/company/history", label: "History", icon: "◷" },
+];
 
   return (
     <nav
