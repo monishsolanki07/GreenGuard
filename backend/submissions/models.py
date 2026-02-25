@@ -15,6 +15,7 @@ class EmissionSubmission(models.Model):
     company = models.ForeignKey(User,on_delete=models.DO_NOTHING)
     files = models.FileField(upload_to=submission_upload_path)
     time_uploaded=models.DateTimeField(auto_now_add=True)
+    
 
     def __str__ (self):
         return f'{self.company} - {self.time_uploaded}'
@@ -43,6 +44,7 @@ class ComplianceResult(models.Model):
     safe_items = models.JSONField(default=list)
     unknown_items = models.JSONField(default=list)
     created_at = models.DateTimeField(auto_now_add=True)
+    report_file = models.FileField(upload_to="reports/", null=True, blank=True)
 
     risk_score = models.IntegerField(default=0)
     threat_level = models.CharField(
