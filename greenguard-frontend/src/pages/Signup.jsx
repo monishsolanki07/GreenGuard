@@ -16,7 +16,7 @@ function Signup() {
     setLoading(true);
     setError("");
     try {
-      await api.post("register/", {
+      await api.post("users/register/", {
         username,
         password,
         company_name: companyName,
