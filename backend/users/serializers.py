@@ -1,4 +1,4 @@
-from .models import User
+from .models import User as ggu
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
@@ -7,10 +7,9 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
     @classmethod
-    def get_token(cls, user):
+    def get_token(cls, user: ggu):
         token = super().get_token(user)
 
-        # Add custom claims
         token["username"] = user.username
         token["company_name"] = user.company_name
         token["role"] = user.role
