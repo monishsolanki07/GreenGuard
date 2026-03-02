@@ -2,34 +2,101 @@ import { useEffect, useState } from "react";
 import api from "@/api/axios";
 import Navbar from "@/components/Navbar";
 
-const statusConfig = {
-  compliant: { color: "#34d399", bg: "rgba(52,211,153,0.1)", border: "rgba(52,211,153,0.2)", label: "Compliant" },
-  non_compliant: { color: "#f87171", bg: "rgba(239,68,68,0.1)", border: "rgba(239,68,68,0.2)", label: "Non-Compliant" },
-  review_required: { color: "#fbbf24", bg: "rgba(251,191,36,0.1)", border: "rgba(251,191,36,0.2)", label: "Under Review" },
-  default: { color: "#60a5fa", bg: "rgba(96,165,250,0.1)", border: "rgba(96,165,250,0.2)", label: "—" },
-};
+const css = `
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap');
+  *, *::before, *::after { box-sizing: border-box; }
 
+  .hy-root { min-height: 100vh; background: #050f0a; font-family: 'Syne', sans-serif; }
+  .hy-bg {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image: linear-gradient(rgba(52,211,153,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(52,211,153,0.025) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+  .hy-wrap { max-width: 1200px; margin: 0 auto; padding: 40px 32px; position: relative; z-index: 1; }
+
+  /* ── Desktop table ── */
+  .hy-table-box {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(52,211,153,0.15);
+    border-radius: 16px; padding: 24px;
+  }
+  .hy-table { width: 100%; border-collapse: collapse; }
+  .hy-table thead th {
+    text-align: left; color: rgba(255,255,255,0.4); font-size: 12px;
+    font-family: 'DM Mono', monospace; letter-spacing: 1px; text-transform: uppercase;
+    padding: 0 12px 14px 0;
+  }
+  .hy-table tbody tr { border-top: 1px solid rgba(255,255,255,0.05); }
+  .hy-table tbody td { padding: 14px 12px 14px 0; vertical-align: middle; color: rgba(255,255,255,0.85); font-size: 14px; }
+
+  /* ── Mobile cards — hidden on desktop ── */
+  .hy-cards { display: none; flex-direction: column; gap: 12px; }
+  .hy-card {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 14px; padding: 18px;
+  }
+  .hy-card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .hy-card-id { color: rgba(255,255,255,0.5); font-family: 'DM Mono', monospace; font-size: 13px; }
+  .hy-card-meta { display: flex; gap: 16px; margin-bottom: 14px; }
+  .hy-card-field { flex: 1; }
+  .hy-card-field-label { color: rgba(255,255,255,0.3); font-size: 10px; font-family: 'DM Mono', monospace; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .hy-card-field-value { font-size: 14px; font-weight: 600; font-family: 'DM Mono', monospace; }
+
+  /* ── Download button ── */
+  .hy-dl-btn {
+    padding: 9px 18px; border-radius: 8px;
+    border: 1px solid rgba(52,211,153,0.2);
+    background: rgba(52,211,153,0.08); color: #34d399;
+    cursor: pointer; font-weight: 600; font-family: 'Syne', sans-serif;
+    font-size: 13px; transition: all 0.2s; white-space: nowrap;
+  }
+  .hy-dl-btn:hover:not(:disabled) { background: rgba(52,211,153,0.16); }
+  .hy-dl-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .hy-dl-btn-full { width: 100%; justify-content: center; }
+
+  /* ══════════════
+     TABLET ≤ 900px — table stays, just tighter
+  ══════════════ */
+  @media (max-width: 900px) {
+    .hy-wrap { padding: 32px 20px; }
+    .hy-table-box { padding: 20px 16px; }
+    .hy-table thead th { font-size: 11px; }
+    .hy-table tbody td { font-size: 13px; }
+  }
+
+  /* ══════════════
+     MOBILE ≤ 640px — kill table, show cards
+  ══════════════ */
+  @media (max-width: 640px) {
+    .hy-wrap { padding: 20px 16px; }
+    .hy-table-box { padding: 0; border: none; background: transparent; }
+
+    /* Hide table entirely */
+    .hy-table { display: none; }
+
+    /* Show card list */
+    .hy-cards { display: flex; }
+  }
+`;
+
+const statusConfig = {
+  compliant:       { color: "#34d399", bg: "rgba(52,211,153,0.1)",  border: "rgba(52,211,153,0.2)",  label: "Compliant"     },
+  non_compliant:   { color: "#f87171", bg: "rgba(239,68,68,0.1)",   border: "rgba(239,68,68,0.2)",   label: "Non-Compliant" },
+  review_required: { color: "#fbbf24", bg: "rgba(251,191,36,0.1)",  border: "rgba(251,191,36,0.2)",  label: "Under Review"  },
+  default:         { color: "#60a5fa", bg: "rgba(96,165,250,0.1)",  border: "rgba(96,165,250,0.2)",  label: "—"             },
+};
 const threatConfig = {
-  HIGH: { color: "#f87171", icon: "🔴" },
+  HIGH:   { color: "#f87171", icon: "🔴" },
   MEDIUM: { color: "#fbbf24", icon: "🟡" },
-  LOW: { color: "#34d399", icon: "🟢" },
+  LOW:    { color: "#34d399", icon: "🟢" },
 };
 
 function StatusBadge({ status }) {
-  const cfg = statusConfig[status] || statusConfig.default;
+  const c = statusConfig[status] || statusConfig.default;
   return (
-    <span
-      style={{
-        background: cfg.bg,
-        border: `1px solid ${cfg.border}`,
-        color: cfg.color,
-        padding: "4px 12px",
-        borderRadius: "100px",
-        fontSize: "12px",
-        fontWeight: "600",
-      }}
-    >
-      {cfg.label}
+    <span style={{ background: c.bg, border: `1px solid ${c.border}`, color: c.color, padding: "4px 12px", borderRadius: "100px", fontSize: "12px", fontWeight: "600", whiteSpace: "nowrap" }}>
+      {c.label}
     </span>
   );
 }
@@ -40,162 +107,112 @@ function History() {
   const [generatingId, setGeneratingId] = useState(null);
 
   useEffect(() => {
-    const fetchHistory = async () => {
-      try {
-        const response = await api.get("submissions/history/");
-        setHistory(response.data);
-      } catch {
-        setHistory([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchHistory();
+    api.get("submissions/history/")
+      .then(res => setHistory(res.data))
+      .catch(() => setHistory([]))
+      .finally(() => setLoading(false));
   }, []);
 
   const handleGenerateReport = async (id) => {
     try {
       setGeneratingId(id);
-      const response = await api.post(
-        `reports/generate/${id}/`,
-        {},
-        { responseType: "blob" }
-      );
-
-      const blob = new Blob([response.data], { type: "application/pdf" });
-      const url = window.URL.createObjectURL(blob);
-
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", `compliance_report_${id}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      const response = await api.post(`reports/generate/${id}/`, {}, { responseType: "blob" });
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
+      const a = document.createElement("a");
+      a.href = url; a.download = `compliance_report_${id}.pdf`;
+      document.body.appendChild(a); a.click(); a.remove();
       window.URL.revokeObjectURL(url);
-    } catch (error) {
-      alert("Report generation failed.");
-    } finally {
-      setGeneratingId(null);
-    }
+    } catch { alert("Report generation failed."); }
+    finally { setGeneratingId(null); }
   };
 
+  const isEmpty = !loading && history.length === 0;
+
   return (
-    <div style={{ minHeight: "100vh", background: "#050f0a", fontFamily: "'Syne', sans-serif" }}>
+    <div className="hy-root">
+      <style>{css}</style>
       <Navbar />
+      <div className="hy-bg" />
 
-      {/* subtle grid background */}
-      <div
-        style={{
-          position: "fixed",
-          inset: 0,
-          pointerEvents: "none",
-          zIndex: 0,
-          backgroundImage:
-            "linear-gradient(rgba(52,211,153,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(52,211,153,0.025) 1px, transparent 1px)",
-          backgroundSize: "60px 60px",
-        }}
-      />
+      <div className="hy-wrap">
 
-      <div
-        style={{
-          maxWidth: "1200px",
-          margin: "0 auto",
-          padding: "40px 32px",
-          position: "relative",
-          zIndex: 1,
-        }}
-      >
         {/* Header */}
         <div style={{ marginBottom: "40px" }}>
-          <p
-            style={{
-              color: "#34d399",
-              fontSize: "12px",
-              fontWeight: "600",
-              letterSpacing: "2px",
-              textTransform: "uppercase",
-              marginBottom: "8px",
-            }}
-          >
-            ↑ HISTORY
-          </p>
-          <h1
-            style={{
-              color: "#fff",
-              fontSize: "36px",
-              fontWeight: "800",
-              letterSpacing: "-1px",
-              margin: "0 0 8px",
-            }}
-          >
-            Submission History
-          </h1>
-          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "14px" }}>
-            View compliance status and download analytical reports
-          </p>
+          <p style={{ color: "#34d399", fontSize: "12px", fontWeight: "600", letterSpacing: "2px", textTransform: "uppercase", fontFamily: "'DM Mono', monospace", marginBottom: "8px" }}>↑ HISTORY</p>
+          <h1 style={{ color: "#fff", fontSize: "clamp(24px, 4vw, 36px)", fontWeight: "800", letterSpacing: "-1px", marginBottom: "8px" }}>Submission History</h1>
+          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "14px" }}>View compliance status and download analytical reports</p>
         </div>
 
-        {/* Table Container */}
-        <div
-          style={{
-            background: "rgba(255,255,255,0.03)",
-            border: "1px solid rgba(52,211,153,0.15)",
-            borderRadius: "16px",
-            padding: "24px",
-          }}
-        >
-          {loading ? (
-            <p style={{ color: "rgba(255,255,255,0.4)" }}>
-              Loading submission history...
-            </p>
-          ) : history.length === 0 ? (
-            <p style={{ color: "rgba(255,255,255,0.4)" }}>
-              No submissions found.
-            </p>
-          ) : (
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr style={{ textAlign: "left", color: "rgba(255,255,255,0.4)", fontSize: "12px" }}>
-                  <th>ID</th>
-                  <th>Status</th>
-                  <th>Risk</th>
-                  <th>Threat</th>
-                  <th>Report</th>
-                </tr>
-              </thead>
-              <tbody>
-                {history.map((item) => {
-                  const threat = threatConfig[item.threat_level] || {};
+        <div className="hy-table-box">
+          {loading && <p style={{ color: "rgba(255,255,255,0.4)", fontFamily: "'DM Mono', monospace", fontSize: "14px" }}>Loading submission history...</p>}
+          {isEmpty && <p style={{ color: "rgba(255,255,255,0.4)", fontFamily: "'DM Mono', monospace", fontSize: "14px" }}>No submissions found.</p>}
+
+          {!loading && history.length > 0 && (
+            <>
+              {/* ── Desktop table ── */}
+              <table className="hy-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Status</th>
+                    <th>Risk Score</th>
+                    <th>Threat Level</th>
+                    <th>Report</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {history.map(item => {
+                    const t = threatConfig[item.threat_level] || {};
+                    return (
+                      <tr key={item.id}>
+                        <td><span style={{ fontFamily: "'DM Mono', monospace", color: "rgba(255,255,255,0.5)" }}>#{item.id}</span></td>
+                        <td><StatusBadge status={item.status} /></td>
+                        <td><span style={{ fontFamily: "'DM Mono', monospace", color: "#fbbf24", fontWeight: "700" }}>{item.risk_score}</span></td>
+                        <td><span style={{ color: t.color, fontWeight: "600" }}>{t.icon} {item.threat_level}</span></td>
+                        <td>
+                          <button className="hy-dl-btn" onClick={() => handleGenerateReport(item.id)} disabled={generatingId === item.id}>
+                            {generatingId === item.id ? "Generating…" : "⬇ Download PDF"}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+
+              {/* ── Mobile cards ── */}
+              <div className="hy-cards">
+                {history.map(item => {
+                  const t = threatConfig[item.threat_level] || {};
                   return (
-                    <tr key={item.id} style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-                      <td style={{ padding: "14px 0" }}>{item.id}</td>
-                      <td><StatusBadge status={item.status} /></td>
-                      <td>{item.risk_score}</td>
-                      <td style={{ color: threat.color }}>
-                        {threat.icon} {item.threat_level}
-                      </td>
-                      <td>
-                        <button
-                          onClick={() => handleGenerateReport(item.id)}
-                          disabled={generatingId === item.id}
-                          style={{
-                            padding: "8px 16px",
-                            borderRadius: "8px",
-                            border: "1px solid rgba(52,211,153,0.2)",
-                            background: "rgba(52,211,153,0.08)",
-                            color: "#34d399",
-                            cursor: "pointer",
-                            fontWeight: "600",
-                          }}
-                        >
-                          {generatingId === item.id ? "Generating..." : "Download PDF"}
-                        </button>
-                      </td>
-                    </tr>
+                    <div key={item.id} className="hy-card">
+                      <div className="hy-card-top">
+                        <span className="hy-card-id">#{item.id}</span>
+                        <StatusBadge status={item.status} />
+                      </div>
+                      <div className="hy-card-meta">
+                        <div className="hy-card-field">
+                          <div className="hy-card-field-label">Risk Score</div>
+                          <div className="hy-card-field-value" style={{ color: "#fbbf24" }}>{item.risk_score}</div>
+                        </div>
+                        <div className="hy-card-field">
+                          <div className="hy-card-field-label">Threat Level</div>
+                          <div className="hy-card-field-value" style={{ color: t.color }}>{t.icon} {item.threat_level}</div>
+                        </div>
+                      </div>
+                      <button
+                        className="hy-dl-btn hy-dl-btn-full"
+                        onClick={() => handleGenerateReport(item.id)}
+                        disabled={generatingId === item.id}
+                        style={{ width: "100%" }}
+                      >
+                        {generatingId === item.id ? "Generating…" : "⬇ Download PDF"}
+                      </button>
+                    </div>
                   );
                 })}
-              </tbody>
-            </table>
+              </div>
+            </>
           )}
         </div>
       </div>
