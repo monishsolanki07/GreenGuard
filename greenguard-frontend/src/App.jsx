@@ -35,34 +35,50 @@ function parseJwt(token) {
 
 // 🎯 Role-Based Guard (stable version)
 function RoleRoute({ role, children }) {
-  const token = localStorage.getItem("access_token");
+  const [checked, setChecked] = React.useState(false);
+  const [allowed, setAllowed] = React.useState(false);
+  const [redirectPath, setRedirectPath] = React.useState("/");
 
-  // No token → not authenticated
-  if (!token) {
-    return <Navigate to="/" replace />;
+  React.useEffect(() => {
+    const token = localStorage.getItem("access_token");
+
+    if (!token) {
+      setRedirectPath("/");
+      setChecked(true);
+      return;
+    }
+
+    try {
+      const decoded = parseJwt(token);
+
+      if (!decoded || !decoded.role) {
+        localStorage.clear();
+        setRedirectPath("/");
+      } else if (decoded.role === role) {
+        setAllowed(true);
+      } else if (decoded.role === "ADMIN") {
+        setRedirectPath("/admin/dashboard");
+      } else {
+        setRedirectPath("/company/dashboard");
+      }
+    } catch {
+      setRedirectPath("/");
+    }
+
+    setChecked(true);
+  }, [role]);
+
+  // Wait until we finish checking
+  if (!checked) {
+    return null; // prevents premature redirect
   }
 
-  const decoded = parseJwt(token);
-
-  // Invalid token structure → force login
-  if (!decoded || !decoded.role) {
-    localStorage.clear();
-    return <Navigate to="/" replace />;
+  if (!allowed) {
+    return <Navigate to={redirectPath} replace />;
   }
 
-  // Correct role → allow access
-  if (decoded.role === role) {
-    return children;
-  }
-
-  // Wrong role → redirect to proper dashboard
-  if (decoded.role === "ADMIN") {
-    return <Navigate to="/admin/dashboard" replace />;
-  }
-
-  return <Navigate to="/company/dashboard" replace />;
+  return children;
 }
-
 
 function App() {
   return (
