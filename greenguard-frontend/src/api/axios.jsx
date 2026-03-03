@@ -31,35 +31,45 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Prevent infinite loop
     if (
       error.response?.status === 401 &&
-      !originalRequest._retry
+      !originalRequest._retry &&
+      !originalRequest.url.includes("login") &&
+      !originalRequest.url.includes("refresh")
     ) {
       originalRequest._retry = true;
 
       const refreshToken = localStorage.getItem("refresh_token");
 
-      if (refreshToken) {
-        try {
-          const res = await api.post("refresh/", {
-            refresh: refreshToken,
-          });
+      if (!refreshToken) {
+        localStorage.clear();
+        window.location.href = "/";
+        return Promise.reject(error);
+      }
 
-          localStorage.setItem("access_token", res.data.access);
+      try {
+        // ⚠ IMPORTANT: use axios, not api
+        const res = await axios.post(
+          "https://greenguard-backend-m87i.onrender.com/api/token/refresh/",
+          { refresh: refreshToken }
+        );
 
-          originalRequest.headers.Authorization =
-            `Bearer ${res.data.access}`;
+        localStorage.setItem("access_token", res.data.access);
 
-          return api(originalRequest);
-        } catch (refreshError) {
-          localStorage.clear();
-          window.location.href = "/";
-        }
+        originalRequest.headers.Authorization =
+          `Bearer ${res.data.access}`;
+
+        return api(originalRequest);
+
+      } catch (refreshError) {
+        localStorage.clear();
+        window.location.href = "/";
+        return Promise.reject(refreshError);
       }
     }
 
     return Promise.reject(error);
   }
 );
-
 export default api;
