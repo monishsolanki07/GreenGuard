@@ -3,92 +3,178 @@ import api from "@/api/axios";
 import Navbar from "@/components/Navbar";
 
 const css = `
-  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap');
-  *, *::before, *::after { box-sizing: border-box; }
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap');
 
-  .up-root { min-height: 100vh; background: #050f0a; font-family: 'Syne', sans-serif; }
-  .up-bg {
-    position: fixed; inset: 0; pointer-events: none; z-index: 0;
-    background-image: linear-gradient(rgba(52,211,153,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(52,211,153,0.025) 1px, transparent 1px);
-    background-size: 60px 60px;
-  }
-  .up-wrap { max-width: 1200px; margin: 0 auto; padding: 40px 32px; position: relative; z-index: 1; }
+*, *::before, *::after { box-sizing: border-box; }
 
-  /* ── Layout: main + sidebar ── */
+html { scroll-behavior: smooth; }
+* { -webkit-tap-highlight-color: transparent; }
+
+.up-root {
+  min-height: 100vh;
+  background: #050f0a;
+  font-family: 'Syne', sans-serif;
+  overflow-x: hidden;
+}
+
+/* ───────────────────────── BACKGROUND GRID ───────────────────────── */
+
+.up-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    linear-gradient(rgba(52,211,153,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(52,211,153,0.025) 1px, transparent 1px);
+  background-size: clamp(40px, 6vw, 60px) clamp(40px, 6vw, 60px);
+}
+
+/* ───────────────────────── CONTAINER ───────────────────────── */
+
+.up-wrap {
+  width: min(1200px, 100%);
+  margin: 0 auto;
+  padding: clamp(20px, 4vw, 40px) clamp(16px, 4vw, 32px);
+  position: relative;
+  z-index: 1;
+}
+
+/* ───────────────────────── LAYOUT SYSTEM ───────────────────────── */
+
+.up-layout {
+  display: grid;
+  grid-template-columns: 1fr minmax(280px, 360px);
+  gap: 24px;
+  align-items: start;
+}
+
+.up-main {}
+.up-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ───────────────────────── DROP ZONE ───────────────────────── */
+
+.up-dropzone {
+  border-radius: 20px;
+  text-align: center;
+  padding: clamp(40px, 6vw, 56px) clamp(20px, 4vw, 32px);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 20px;
+  backdrop-filter: blur(6px);
+}
+
+.up-dropzone:hover {
+  transform: translateY(-3px);
+}
+
+/* ───────────────────────── SUBMIT BUTTON ───────────────────────── */
+
+.up-submit {
+  width: 100%;
+  padding: clamp(14px, 3vw, 16px);
+  border: none;
+  border-radius: 14px;
+  font-size: clamp(14px, 2vw, 16px);
+  font-weight: 700;
+  font-family: 'Syne', sans-serif;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.up-submit:not(:disabled):hover {
+  transform: translateY(-2px);
+}
+
+/* ───────────────────────── PANELS ───────────────────────── */
+
+.up-panel {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(52,211,153,0.1);
+  border-radius: 16px;
+  padding: clamp(18px, 3vw, 24px);
+  backdrop-filter: blur(6px);
+}
+
+.up-panel h3 {
+  color: #fff;
+  font-size: clamp(14px, 2vw, 16px);
+  font-weight: 700;
+  margin: 0 0 16px;
+}
+
+/* ───────────────────────── RESULT GRID ───────────────────────── */
+
+.up-result-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+/* ───────────────────────── SPINNER ───────────────────────── */
+
+@keyframes up-spin {
+  to { transform: rotate(360deg); }
+}
+
+.up-spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  animation: up-spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+/* ───────────────────────── TABLET BREAKPOINT ───────────────────────── */
+
+@media (max-width: 1024px) {
+
   .up-layout {
-    display: grid;
-    /* sidebar fixed 360px, main takes rest */
-    grid-template-columns: 1fr 360px;
-    grid-template-areas: "main sidebar";
-    gap: 24px;
-    align-items: start;
+    grid-template-columns: 1fr;
   }
-  .up-main   { grid-area: main; }
-  .up-sidebar { grid-area: sidebar; display: flex; flex-direction: column; gap: 16px; }
 
-  /* ── Drop zone ── */
+  .up-sidebar {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .up-sidebar > * {
+    flex: 1 1 280px;
+  }
+
+}
+
+/* ───────────────────────── MOBILE BREAKPOINT ───────────────────────── */
+
+@media (max-width: 640px) {
+
+  .up-layout {
+    gap: 20px;
+  }
+
   .up-dropzone {
-    border-radius: 20px; text-align: center;
-    padding: 56px 32px; cursor: pointer;
-    transition: all 0.2s ease; margin-bottom: 20px;
+    border-radius: 16px;
   }
 
-  /* ── Submit button ── */
-  .up-submit {
-    width: 100%; padding: 16px; border: none; border-radius: 14px;
-    color: #fff; font-size: 16px; font-weight: 700; font-family: 'Syne', sans-serif;
-    transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px;
+  .up-sidebar {
+    flex-direction: column;
   }
 
-  /* ── Panel ── */
   .up-panel {
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(52,211,153,0.1);
-    border-radius: 16px; padding: 24px;
-  }
-  .up-panel h3 { color: #fff; font-size: 16px; font-weight: 700; margin: 0 0 16px; }
-
-  /* ── Result grid: 3 cols ── */
-  .up-result-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 14px;
-    margin-bottom: 24px;
+    padding: 18px 16px;
   }
 
-  @keyframes up-spin { to { transform: rotate(360deg); } }
-  .up-spinner {
-    width: 16px; height: 16px; border-radius: 50%;
-    border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
-    animation: up-spin 0.8s linear infinite; flex-shrink: 0;
-  }
-
-  /* ══════════════════════════════
-     TABLET ≤ 900px
-     Sidebar slides below main
-  ══════════════════════════════ */
-  @media (max-width: 900px) {
-    .up-layout {
-      grid-template-columns: 1fr;
-      grid-template-areas:
-        "main"
-        "sidebar";
-    }
-    .up-sidebar { flex-direction: row; flex-wrap: wrap; }
-    .up-sidebar > * { flex: 1 1 280px; }
-  }
-
-  /* ══════════════════════════════
-     MOBILE ≤ 640px
-  ══════════════════════════════ */
-  @media (max-width: 640px) {
-    .up-wrap { padding: 20px 16px; }
-    .up-dropzone { padding: 40px 20px; }
-    .up-result-grid { grid-template-columns: 1fr; }
-    .up-sidebar { flex-direction: column; }
-    .up-sidebar > * { flex: unset; }
-    .up-panel { padding: 20px 16px; }
-  }
+}
 `;
 
 const guidelines = [

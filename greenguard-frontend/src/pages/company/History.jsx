@@ -3,81 +3,212 @@ import api from "@/api/axios";
 import Navbar from "@/components/Navbar";
 
 const css = `
-  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap');
-  *, *::before, *::after { box-sizing: border-box; }
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap');
 
-  .hy-root { min-height: 100vh; background: #050f0a; font-family: 'Syne', sans-serif; }
-  .hy-bg {
-    position: fixed; inset: 0; pointer-events: none; z-index: 0;
-    background-image: linear-gradient(rgba(52,211,153,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(52,211,153,0.025) 1px, transparent 1px);
-    background-size: 60px 60px;
-  }
-  .hy-wrap { max-width: 1200px; margin: 0 auto; padding: 40px 32px; position: relative; z-index: 1; }
+*, *::before, *::after { box-sizing: border-box; }
 
-  /* ── Desktop table ── */
-  .hy-table-box {
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(52,211,153,0.15);
-    border-radius: 16px; padding: 24px;
-  }
-  .hy-table { width: 100%; border-collapse: collapse; }
+html { scroll-behavior: smooth; }
+* { -webkit-tap-highlight-color: transparent; }
+
+.hy-root {
+  min-height: 100vh;
+  background: #050f0a;
+  font-family: 'Syne', sans-serif;
+  overflow-x: hidden;
+}
+
+/* ───────────────────────── BACKGROUND GRID ───────────────────────── */
+
+.hy-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    linear-gradient(rgba(52,211,153,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(52,211,153,0.025) 1px, transparent 1px);
+  background-size: clamp(40px, 6vw, 60px) clamp(40px, 6vw, 60px);
+}
+
+/* ───────────────────────── CONTAINER ───────────────────────── */
+
+.hy-wrap {
+  width: min(1200px, 100%);
+  margin: 0 auto;
+  padding: clamp(20px, 4vw, 40px) clamp(16px, 4vw, 32px);
+  position: relative;
+  z-index: 1;
+}
+
+/* ───────────────────────── TABLE WRAPPER ───────────────────────── */
+
+.hy-table-box {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(52,211,153,0.15);
+  border-radius: 16px;
+  padding: clamp(18px, 3vw, 24px);
+  backdrop-filter: blur(6px);
+  overflow-x: auto; /* Important for medium screens */
+}
+
+/* ───────────────────────── TABLE ───────────────────────── */
+
+.hy-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px; /* ensures scroll instead of breaking */
+}
+
+.hy-table thead th {
+  text-align: left;
+  color: rgba(255,255,255,0.4);
+  font-size: 12px;
+  font-family: 'DM Mono', monospace;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 0 12px 14px 0;
+}
+
+.hy-table tbody tr {
+  border-top: 1px solid rgba(255,255,255,0.05);
+  transition: background 0.2s ease;
+}
+
+.hy-table tbody tr:hover {
+  background: rgba(255,255,255,0.02);
+}
+
+.hy-table tbody td {
+  padding: 14px 12px 14px 0;
+  vertical-align: middle;
+  color: rgba(255,255,255,0.85);
+  font-size: 14px;
+}
+
+/* ───────────────────────── MOBILE CARDS ───────────────────────── */
+
+.hy-cards {
+  display: none;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.hy-card {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 14px;
+  padding: 18px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hy-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+}
+
+.hy-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.hy-card-id {
+  color: rgba(255,255,255,0.5);
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+}
+
+.hy-card-meta {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.hy-card-field {
+  flex: 1 1 120px;
+}
+
+.hy-card-field-label {
+  color: rgba(255,255,255,0.3);
+  font-size: 10px;
+  font-family: 'DM Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+
+.hy-card-field-value {
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'DM Mono', monospace;
+}
+
+/* ───────────────────────── DOWNLOAD BUTTON ───────────────────────── */
+
+.hy-dl-btn {
+  padding: 9px 18px;
+  border-radius: 8px;
+  border: 1px solid rgba(52,211,153,0.2);
+  background: rgba(52,211,153,0.08);
+  color: #34d399;
+  cursor: pointer;
+  font-weight: 600;
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.hy-dl-btn:hover:not(:disabled) {
+  background: rgba(52,211,153,0.18);
+  transform: translateY(-2px);
+}
+
+.hy-dl-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.hy-dl-btn-full {
+  width: 100%;
+  text-align: center;
+}
+
+/* ───────────────────────── TABLET ───────────────────────── */
+
+@media (max-width: 900px) {
+
   .hy-table thead th {
-    text-align: left; color: rgba(255,255,255,0.4); font-size: 12px;
-    font-family: 'DM Mono', monospace; letter-spacing: 1px; text-transform: uppercase;
-    padding: 0 12px 14px 0;
-  }
-  .hy-table tbody tr { border-top: 1px solid rgba(255,255,255,0.05); }
-  .hy-table tbody td { padding: 14px 12px 14px 0; vertical-align: middle; color: rgba(255,255,255,0.85); font-size: 14px; }
-
-  /* ── Mobile cards — hidden on desktop ── */
-  .hy-cards { display: none; flex-direction: column; gap: 12px; }
-  .hy-card {
-    background: rgba(255,255,255,0.02);
-    border: 1px solid rgba(255,255,255,0.07);
-    border-radius: 14px; padding: 18px;
-  }
-  .hy-card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-  .hy-card-id { color: rgba(255,255,255,0.5); font-family: 'DM Mono', monospace; font-size: 13px; }
-  .hy-card-meta { display: flex; gap: 16px; margin-bottom: 14px; }
-  .hy-card-field { flex: 1; }
-  .hy-card-field-label { color: rgba(255,255,255,0.3); font-size: 10px; font-family: 'DM Mono', monospace; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
-  .hy-card-field-value { font-size: 14px; font-weight: 600; font-family: 'DM Mono', monospace; }
-
-  /* ── Download button ── */
-  .hy-dl-btn {
-    padding: 9px 18px; border-radius: 8px;
-    border: 1px solid rgba(52,211,153,0.2);
-    background: rgba(52,211,153,0.08); color: #34d399;
-    cursor: pointer; font-weight: 600; font-family: 'Syne', sans-serif;
-    font-size: 13px; transition: all 0.2s; white-space: nowrap;
-  }
-  .hy-dl-btn:hover:not(:disabled) { background: rgba(52,211,153,0.16); }
-  .hy-dl-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-  .hy-dl-btn-full { width: 100%; justify-content: center; }
-
-  /* ══════════════
-     TABLET ≤ 900px — table stays, just tighter
-  ══════════════ */
-  @media (max-width: 900px) {
-    .hy-wrap { padding: 32px 20px; }
-    .hy-table-box { padding: 20px 16px; }
-    .hy-table thead th { font-size: 11px; }
-    .hy-table tbody td { font-size: 13px; }
+    font-size: 11px;
   }
 
-  /* ══════════════
-     MOBILE ≤ 640px — kill table, show cards
-  ══════════════ */
-  @media (max-width: 640px) {
-    .hy-wrap { padding: 20px 16px; }
-    .hy-table-box { padding: 0; border: none; background: transparent; }
-
-    /* Hide table entirely */
-    .hy-table { display: none; }
-
-    /* Show card list */
-    .hy-cards { display: flex; }
+  .hy-table tbody td {
+    font-size: 13px;
   }
+
+}
+
+/* ───────────────────────── MOBILE ───────────────────────── */
+
+@media (max-width: 640px) {
+
+  .hy-table-box {
+    background: transparent;
+    border: none;
+    padding: 0;
+  }
+
+  .hy-table {
+    display: none;
+  }
+
+  .hy-cards {
+    display: flex;
+  }
+
+}
 `;
 
 const statusConfig = {
