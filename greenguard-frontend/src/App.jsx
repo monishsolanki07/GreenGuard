@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import React from "react";
 
 import Login from "./pages/Login";
 import Upload from "./pages/company/Upload";
@@ -52,9 +53,10 @@ function RoleRoute({ role, children }) {
       const decoded = parseJwt(token);
 
       if (!decoded || !decoded.role) {
-        localStorage.clear();
-        setRedirectPath("/");
-      } else if (decoded.role === role) {
+  localStorage.removeItem("access_token");
+  localStorage.removeItem("refresh_token");
+  setRedirectPath("/");
+} else if (decoded.role === role) {
         setAllowed(true);
       } else if (decoded.role === "ADMIN") {
         setRedirectPath("/admin/dashboard");
