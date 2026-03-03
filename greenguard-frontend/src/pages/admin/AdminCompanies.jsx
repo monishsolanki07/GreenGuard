@@ -33,170 +33,306 @@ function AdminCompanies() {
   };
 
   return (
-    <div style={{ display: "flex" }}>
+    <div className="ac-root">
       <AdminSidebar />
 
-      <div style={styles.main}>
-        <h1 style={styles.heading}>Company Control Panel</h1>
+      <div className="ac-main">
+        <h1 className="ac-heading">Company Control Panel</h1>
 
         {loading ? (
-          <div style={styles.center}>
-            <div style={styles.spinner}></div>
+          <div className="ac-center">
+            <div className="ac-spinner"></div>
             <p>Loading companies...</p>
           </div>
         ) : error ? (
-          <div style={styles.center}>
+          <div className="ac-center">
             <p style={{ color: "#f87171" }}>{error}</p>
           </div>
         ) : companies.length === 0 ? (
-          <div style={styles.center}>
+          <div className="ac-center">
             <p style={{ opacity: 0.6 }}>No companies registered yet.</p>
           </div>
         ) : (
-          <div style={styles.tableWrapper}>
-            <table style={styles.table}>
-              <thead>
-                <tr>
-                  <th>Company</th>
-                  <th>Username</th>
-                  <th>Status</th>
-                  <th>Submissions</th>
-                  <th>Avg Risk</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
+          <>
+            {/* Desktop Table */}
+            <div className="ac-table-wrapper">
+              <table className="ac-table">
+                <thead>
+                  <tr>
+                    <th>Company</th>
+                    <th>Username</th>
+                    <th>Status</th>
+                    <th>Submissions</th>
+                    <th>Avg Risk</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {companies.map(company => {
+                    const risk = Number(company.average_risk) || 0;
 
-              <tbody>
-                {companies.map(company => {
-                  const risk = Number(company.average_risk) || 0;
+                    return (
+                      <tr key={company.id}>
+                        <td>{company.company_name}</td>
+                        <td style={{ opacity: 0.7 }}>{company.username}</td>
 
-                  return (
-                    <tr key={company.id} style={styles.row}>
-                      <td>{company.company_name}</td>
-                      <td style={{ opacity: 0.7 }}>{company.username}</td>
+                        <td>
+                          <span className={`ac-badge ${company.is_active ? "active" : "inactive"}`}>
+                            {company.is_active ? "Active" : "Inactive"}
+                          </span>
+                        </td>
 
-                      <td>
-                        <span
-                          style={{
-                            ...styles.statusBadge,
-                            background: company.is_active
-                              ? "rgba(52,211,153,0.15)"
-                              : "rgba(239,68,68,0.15)",
-                            color: company.is_active
-                              ? "#34d399"
-                              : "#f87171",
-                          }}
+                        <td>{company.submission_count}</td>
+
+                        <td
+                          className={`ac-risk ${
+                            risk > 7 ? "high" :
+                            risk > 4 ? "medium" :
+                            "low"
+                          }`}
                         >
-                          {company.is_active ? "Active" : "Inactive"}
-                        </span>
-                      </td>
+                          {risk.toFixed(2)}
+                        </td>
 
-                      <td>{company.submission_count}</td>
+                        <td>
+                          <button
+                            className={`ac-action ${company.is_active ? "deactivate" : "activate"}`}
+                            onClick={() => toggleStatus(company.id, company.is_active)}
+                          >
+                            {company.is_active ? "Deactivate" : "Activate"}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
 
-                      <td
-                        style={{
-                          fontWeight: "700",
-                          color:
-                            risk > 7
-                              ? "#f87171"
-                              : risk > 4
-                              ? "#fbbf24"
-                              : "#34d399",
-                        }}
-                      >
-                        {risk.toFixed(2)}
-                      </td>
+            {/* Mobile Cards */}
+            <div className="ac-cards">
+              {companies.map(company => {
+                const risk = Number(company.average_risk) || 0;
 
-                      <td>
-                        <button
-                          style={{
-                            ...styles.actionBtn,
-                            background: company.is_active
-                              ? "rgba(239,68,68,0.1)"
-                              : "rgba(52,211,153,0.1)",
-                            color: company.is_active
-                              ? "#f87171"
-                              : "#34d399",
-                            border: `1px solid ${
-                              company.is_active
-                                ? "rgba(239,68,68,0.3)"
-                                : "rgba(52,211,153,0.3)"
-                            }`,
-                          }}
-                          onClick={() =>
-                            toggleStatus(company.id, company.is_active)
-                          }
-                        >
-                          {company.is_active ? "Deactivate" : "Activate"}
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                return (
+                  <div key={company.id} className="ac-card">
+                    <div className="ac-card-top">
+                      <div>
+                        <div className="ac-company">{company.company_name}</div>
+                        <div className="ac-username">{company.username}</div>
+                      </div>
+
+                      <span className={`ac-badge ${company.is_active ? "active" : "inactive"}`}>
+                        {company.is_active ? "Active" : "Inactive"}
+                      </span>
+                    </div>
+
+                    <div className="ac-card-grid">
+                      <div>
+                        <div className="ac-label">Submissions</div>
+                        <div>{company.submission_count}</div>
+                      </div>
+
+                      <div>
+                        <div className="ac-label">Avg Risk</div>
+                        <div className={`ac-risk ${
+                          risk > 7 ? "high" :
+                          risk > 4 ? "medium" :
+                          "low"
+                        }`}>
+                          {risk.toFixed(2)}
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      className={`ac-action ${company.is_active ? "deactivate" : "activate"}`}
+                      onClick={() => toggleStatus(company.id, company.is_active)}
+                    >
+                      {company.is_active ? "Deactivate" : "Activate"}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
+
+      <style>{`
+        .ac-root {
+          display: flex;
+          min-height: 100vh;
+          background: #050f0a;
+          color: #fff;
+          font-family: 'Syne', sans-serif;
+        }
+
+        .ac-main {
+          flex: 1;
+          padding: clamp(20px, 4vw, 40px);
+        }
+
+        .ac-heading {
+          font-size: clamp(22px, 4vw, 30px);
+          margin-bottom: 28px;
+        }
+
+        /* Table */
+        .ac-table-wrapper {
+          background: rgba(255,255,255,0.04);
+          border-radius: 16px;
+          padding: 20px;
+          border: 1px solid rgba(52,211,153,0.15);
+          overflow-x: auto;
+        }
+
+        .ac-table {
+          width: 100%;
+          border-collapse: collapse;
+          min-width: 700px;
+        }
+
+        .ac-table th {
+          text-align: left;
+          font-size: 12px;
+          opacity: 0.6;
+          padding-bottom: 14px;
+        }
+
+        .ac-table td {
+          padding: 14px 0;
+          border-top: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .ac-table tr:hover {
+          background: rgba(255,255,255,0.02);
+        }
+
+        /* Cards */
+        .ac-cards {
+          display: none;
+          flex-direction: column;
+          gap: 16px;
+        }
+
+        .ac-card {
+          background: rgba(255,255,255,0.04);
+          padding: 18px;
+          border-radius: 14px;
+          border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .ac-card-top {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 16px;
+        }
+
+        .ac-company {
+          font-weight: 700;
+        }
+
+        .ac-username {
+          font-size: 13px;
+          opacity: 0.6;
+        }
+
+        .ac-card-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 12px;
+          margin-bottom: 16px;
+        }
+
+        .ac-label {
+          font-size: 11px;
+          opacity: 0.6;
+        }
+
+        /* Badges */
+        .ac-badge {
+          padding: 6px 14px;
+          border-radius: 50px;
+          font-size: 12px;
+          font-weight: 600;
+        }
+
+        .ac-badge.active {
+          background: rgba(52,211,153,0.15);
+          color: #34d399;
+        }
+
+        .ac-badge.inactive {
+          background: rgba(239,68,68,0.15);
+          color: #f87171;
+        }
+
+        /* Risk colors */
+        .ac-risk.high { color: #f87171; font-weight: 700; }
+        .ac-risk.medium { color: #fbbf24; font-weight: 700; }
+        .ac-risk.low { color: #34d399; font-weight: 700; }
+
+        /* Buttons */
+        .ac-action {
+          padding: 8px 14px;
+          border-radius: 8px;
+          font-weight: 600;
+          cursor: pointer;
+          width: 100%;
+          margin-top: 8px;
+        }
+
+        .ac-action.activate {
+          background: rgba(52,211,153,0.1);
+          color: #34d399;
+          border: 1px solid rgba(52,211,153,0.3);
+        }
+
+        .ac-action.deactivate {
+          background: rgba(239,68,68,0.1);
+          color: #f87171;
+          border: 1px solid rgba(239,68,68,0.3);
+        }
+
+        /* Center states */
+        .ac-center {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          height: 60vh;
+        }
+
+        .ac-spinner {
+          width: 40px;
+          height: 40px;
+          border: 3px solid rgba(52,211,153,0.2);
+          border-top: 3px solid #34d399;
+          border-radius: 50%;
+          animation: spin 0.8s linear infinite;
+          margin-bottom: 12px;
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+          .ac-table-wrapper {
+            display: none;
+          }
+
+          .ac-cards {
+            display: flex;
+          }
+        }
+
+      `}</style>
     </div>
   );
 }
-
-const styles = {
-  main: {
-    flex: 1,
-    minHeight: "100vh",
-    background: "#050f0a",
-    padding: "40px",
-    fontFamily: "'Syne', sans-serif",
-    color: "#fff",
-  },
-  heading: {
-    fontSize: "30px",
-    marginBottom: "30px",
-  },
-  tableWrapper: {
-    background: "rgba(255,255,255,0.04)",
-    borderRadius: "16px",
-    padding: "20px",
-    border: "1px solid rgba(52,211,153,0.15)",
-    overflowX: "auto",
-  },
-  table: {
-    width: "100%",
-    borderCollapse: "collapse",
-  },
-  row: {
-    borderBottom: "1px solid rgba(255,255,255,0.05)",
-  },
-  statusBadge: {
-    padding: "6px 14px",
-    borderRadius: "50px",
-    fontSize: "12px",
-    fontWeight: "600",
-  },
-  actionBtn: {
-    padding: "6px 14px",
-    borderRadius: "8px",
-    cursor: "pointer",
-    fontWeight: "600",
-  },
-  center: {
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
-    height: "60vh",
-  },
-  spinner: {
-    width: "40px",
-    height: "40px",
-    border: "3px solid rgba(52,211,153,0.2)",
-    borderTop: "3px solid #34d399",
-    borderRadius: "50%",
-    animation: "spin 0.8s linear infinite",
-    marginBottom: "12px",
-  },
-};
 
 export default AdminCompanies;

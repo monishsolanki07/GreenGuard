@@ -22,23 +22,151 @@ function AdminDashboard() {
   }, []);
 
   return (
-    <div style={{ display: "flex" }}>
+    <div className="ad-root">
       <AdminSidebar />
 
-      <div style={styles.mainContent}>
+      <div className="ad-main">
         {loading ? (
-          <div style={styles.centered}>
-            <div style={styles.spinner}></div>
-            <p style={styles.loading}>Loading admin analytics...</p>
+          <div className="ad-centered">
+            <div className="ad-spinner"></div>
+            <p>Loading admin analytics...</p>
           </div>
         ) : !data ? (
-          <div style={styles.centered}>
-            <p style={styles.error}>Failed to load dashboard data.</p>
+          <div className="ad-centered">
+            <p className="ad-error">Failed to load dashboard data.</p>
           </div>
         ) : (
           <DashboardContent data={data} />
         )}
       </div>
+
+      <style>{`
+        .ad-root {
+          display: flex;
+          min-height: 100vh;
+          background: #050f0a;
+          color: #fff;
+          font-family: 'Syne', sans-serif;
+        }
+
+        .ad-main {
+          flex: 1;
+          padding: clamp(20px, 4vw, 40px);
+        }
+
+        .ad-heading {
+          font-size: clamp(22px, 4vw, 32px);
+          margin-bottom: 28px;
+          font-weight: 800;
+        }
+
+        /* KPI Grid */
+        .ad-kpi-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+          gap: 20px;
+          margin-bottom: 30px;
+        }
+
+        .ad-kpi-card {
+          background: rgba(255,255,255,0.04);
+          padding: 20px;
+          border-radius: 14px;
+          border: 1px solid rgba(52,211,153,0.15);
+          transition: transform 0.2s ease;
+        }
+
+        .ad-kpi-card:hover {
+          transform: translateY(-3px);
+        }
+
+        .ad-kpi-title {
+          font-size: 12px;
+          opacity: 0.6;
+        }
+
+        .ad-kpi-value {
+          font-size: clamp(20px, 3vw, 28px);
+          margin-top: 8px;
+        }
+
+        /* Chart Grid */
+        .ad-chart-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0,1fr));
+          gap: 20px;
+          margin-bottom: 30px;
+        }
+
+        .ad-card {
+          background: rgba(255,255,255,0.04);
+          padding: clamp(18px, 3vw, 24px);
+          border-radius: 14px;
+          border: 1px solid rgba(52,211,153,0.15);
+        }
+
+        .ad-card h3 {
+          margin-bottom: 18px;
+        }
+
+        /* Table */
+        .ad-table-wrapper {
+          overflow-x: auto;
+        }
+
+        .ad-table {
+          width: 100%;
+          border-collapse: collapse;
+          min-width: 400px;
+        }
+
+        .ad-table th {
+          text-align: left;
+          font-size: 12px;
+          opacity: 0.6;
+          padding-bottom: 12px;
+        }
+
+        .ad-table td {
+          padding: 12px 0;
+          border-top: 1px solid rgba(255,255,255,0.06);
+        }
+
+        /* Loading */
+        .ad-centered {
+          min-height: 80vh;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+        }
+
+        .ad-error {
+          color: #f87171;
+        }
+
+        .ad-spinner {
+          width: 40px;
+          height: 40px;
+          border: 3px solid rgba(52,211,153,0.2);
+          border-top: 3px solid #34d399;
+          border-radius: 50%;
+          animation: spin 0.8s linear infinite;
+          margin-bottom: 12px;
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+
+        /* Tablet */
+        @media (max-width: 1024px) {
+          .ad-chart-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+
+      `}</style>
     </div>
   );
 }
@@ -59,92 +187,88 @@ function DashboardContent({ data }) {
 
   return (
     <>
-      <h1 style={styles.heading}>Admin Control Center</h1>
+      <h1 className="ad-heading">Admin Control Center</h1>
 
-      {/* KPI Cards */}
-      <div style={styles.kpiGrid}>
+      {/* KPI */}
+      <div className="ad-kpi-grid">
         <KPI title="Total Companies" value={data.total_companies} />
         <KPI title="Total Submissions" value={data.total_submissions} />
         <KPI title="Avg Risk Score" value={data.average_risk_score} />
         <KPI title="Highest Threat" value={highestThreat} />
       </div>
 
-      {/* Charts Row */}
-      <div style={styles.chartGrid}>
-        {/* Pie Chart */}
-        <div style={styles.card}>
-          <h3 style={styles.cardTitle}>Compliance Distribution</h3>
-          <ResponsiveContainer width="100%" height={250}>
-            <PieChart>
-              <Pie
-                data={complianceData}
-                dataKey="value"
-                outerRadius={90}
-                innerRadius={50}
-              >
-                {complianceData.map((_, index) => (
-                  <Cell key={index} fill={COLORS[index]} />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
+      {/* Charts */}
+      <div className="ad-chart-grid">
+        <div className="ad-card">
+          <h3>Compliance Distribution</h3>
+          <div style={{ height: "clamp(220px, 35vw, 260px)" }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={complianceData} dataKey="value" outerRadius={90} innerRadius={50}>
+                  {complianceData.map((_, index) => (
+                    <Cell key={index} fill={COLORS[index]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
-        {/* Bar Chart */}
-        <div style={styles.card}>
-          <h3 style={styles.cardTitle}>Threat Level Breakdown</h3>
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={data.threat_level_breakdown || []}>
-              <XAxis dataKey="threat_level" stroke="#aaa" />
+        <div className="ad-card">
+          <h3>Threat Level Breakdown</h3>
+          <div style={{ height: "clamp(220px, 35vw, 260px)" }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={data.threat_level_breakdown || []}>
+                <XAxis dataKey="threat_level" stroke="#aaa" />
+                <YAxis stroke="#aaa" />
+                <Tooltip />
+                <Bar dataKey="count" fill="#34d399" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      {/* Line */}
+      <div className="ad-card">
+        <h3>Monthly Submission Trend</h3>
+        <div style={{ height: "clamp(240px, 40vw, 320px)" }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={data.submission_volume_trend || []}>
+              <XAxis dataKey="month" stroke="#aaa" />
               <YAxis stroke="#aaa" />
               <Tooltip />
-              <Bar dataKey="count" fill="#34d399" />
-            </BarChart>
+              <Line type="monotone" dataKey="total" stroke="#34d399" strokeWidth={2} />
+            </LineChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      {/* Line Chart */}
-      <div style={styles.card}>
-        <h3 style={styles.cardTitle}>Monthly Submission Trend</h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={data.submission_volume_trend || []}>
-            <XAxis dataKey="month" stroke="#aaa" />
-            <YAxis stroke="#aaa" />
-            <Tooltip />
-            <Line
-              type="monotone"
-              dataKey="total"
-              stroke="#34d399"
-              strokeWidth={2}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-
-      {/* Top Companies */}
-      <div style={styles.card}>
-        <h3 style={styles.cardTitle}>Top 5 Highest Risk Companies</h3>
-        <table style={styles.table}>
-          <thead>
-            <tr>
-              <th>Company</th>
-              <th>Avg Risk</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(data.top_5_highest_risk_companies || []).map((company, idx) => (
-              <tr key={idx}>
-                <td>{company.submission__company__company_name}</td>
-                <td style={{ color: "#f87171", fontWeight: "600" }}>
-                  {company.avg_risk?.toFixed(2)}
-                </td>
+      {/* Table */}
+      <div className="ad-card">
+        <h3>Top 5 Highest Risk Companies</h3>
+        <div className="ad-table-wrapper">
+          <table className="ad-table">
+            <thead>
+              <tr>
+                <th>Company</th>
+                <th>Avg Risk</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {(data.top_5_highest_risk_companies || []).map((company, idx) => (
+                <tr key={idx}>
+                  <td>{company.submission__company__company_name}</td>
+                  <td style={{ color: "#f87171", fontWeight: "600" }}>
+                    {company.avg_risk?.toFixed(2)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </>
   );
@@ -152,87 +276,11 @@ function DashboardContent({ data }) {
 
 function KPI({ title, value }) {
   return (
-    <div style={styles.kpiCard}>
-      <p style={styles.kpiTitle}>{title}</p>
-      <h2 style={styles.kpiValue}>{value ?? "-"}</h2>
+    <div className="ad-kpi-card">
+      <p className="ad-kpi-title">{title}</p>
+      <h2 className="ad-kpi-value">{value ?? "-"}</h2>
     </div>
   );
 }
-
-const styles = {
-  mainContent: {
-    flex: 1,
-    minHeight: "100vh",
-    background: "#050f0a",
-    padding: "40px",
-    fontFamily: "'Syne', sans-serif",
-    color: "#fff",
-  },
-  heading: {
-    fontSize: "32px",
-    marginBottom: "30px",
-  },
-  kpiGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-    gap: "20px",
-    marginBottom: "30px",
-  },
-  kpiCard: {
-    background: "rgba(255,255,255,0.04)",
-    padding: "20px",
-    borderRadius: "14px",
-    border: "1px solid rgba(52,211,153,0.15)",
-  },
-  kpiTitle: {
-    fontSize: "12px",
-    opacity: 0.6,
-  },
-  kpiValue: {
-    fontSize: "28px",
-    marginTop: "8px",
-  },
-  chartGrid: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "20px",
-    marginBottom: "30px",
-  },
-  card: {
-    background: "rgba(255,255,255,0.04)",
-    padding: "24px",
-    borderRadius: "14px",
-    border: "1px solid rgba(52,211,153,0.15)",
-    marginBottom: "20px",
-  },
-  cardTitle: {
-    marginBottom: "20px",
-  },
-  table: {
-    width: "100%",
-    borderCollapse: "collapse",
-  },
-  centered: {
-    minHeight: "100vh",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loading: {
-    marginTop: "15px",
-  },
-  error: {
-    color: "#f87171",
-  },
-  spinner: {
-    width: "40px",
-    height: "40px",
-    border: "3px solid rgba(52,211,153,0.2)",
-    borderTop: "3px solid #34d399",
-    borderRadius: "50%",
-    animation: "spin 0.8s linear infinite",
-  },
-};
 
 export default AdminDashboard;
