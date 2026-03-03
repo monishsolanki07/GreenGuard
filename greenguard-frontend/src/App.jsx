@@ -15,25 +15,52 @@ import AdminAudit from "./pages/admin/AdminAudit";
 import AdminPolicies from "./pages/admin/AdminPolicies";
 
 
-// 🎯 Role-Based Guard
+// ✅ Safe Base64URL JWT Parser (production-safe)
+function parseJwt(token) {
+  try {
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url
+      .replace(/-/g, "+")
+      .replace(/_/g, "/");
+
+    const padded =
+      base64 + "=".repeat((4 - (base64.length % 4)) % 4);
+
+    return JSON.parse(atob(padded));
+  } catch (error) {
+    return null;
+  }
+}
+
+
+// 🎯 Role-Based Guard (stable version)
 function RoleRoute({ role, children }) {
   const token = localStorage.getItem("access_token");
-  if (!token) return <Navigate to="/" replace />;
 
-  try {
-    const decoded = JSON.parse(atob(token.split(".")[1]));
-
-    if (decoded.role === role) {
-      return children;
-    } else {
-      return decoded.role === "ADMIN"
-        ? <Navigate to="/admin/dashboard" replace />
-        : <Navigate to="/company/dashboard" replace />; // ✅ FIXED
-    }
-
-  } catch {
+  // No token → not authenticated
+  if (!token) {
     return <Navigate to="/" replace />;
   }
+
+  const decoded = parseJwt(token);
+
+  // Invalid token structure → force login
+  if (!decoded || !decoded.role) {
+    localStorage.clear();
+    return <Navigate to="/" replace />;
+  }
+
+  // Correct role → allow access
+  if (decoded.role === role) {
+    return children;
+  }
+
+  // Wrong role → redirect to proper dashboard
+  if (decoded.role === "ADMIN") {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
+
+  return <Navigate to="/company/dashboard" replace />;
 }
 
 
@@ -85,13 +112,13 @@ function App() {
         />
 
         <Route
-  path="/admin/policies"
-  element={
-    <RoleRoute role="ADMIN">
-      <AdminPolicies />
-    </RoleRoute>
-  }
-/>
+          path="/admin/policies"
+          element={
+            <RoleRoute role="ADMIN">
+              <AdminPolicies />
+            </RoleRoute>
+          }
+        />
 
         <Route
           path="/admin/companies"
