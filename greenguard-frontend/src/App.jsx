@@ -16,10 +16,14 @@ import AdminAudit from "./pages/admin/AdminAudit";
 import AdminPolicies from "./pages/admin/AdminPolicies";
 
 
-// ✅ Safe Base64URL JWT Parser (production-safe)
+// ==============================
+// JWT PARSER (with logs)
+// ==============================
 function parseJwt(token) {
   try {
+    console.log("🔎 Parsing JWT...");
     const base64Url = token.split(".")[1];
+
     const base64 = base64Url
       .replace(/-/g, "+")
       .replace(/_/g, "/");
@@ -27,62 +31,87 @@ function parseJwt(token) {
     const padded =
       base64 + "=".repeat((4 - (base64.length % 4)) % 4);
 
-    return JSON.parse(atob(padded));
+    const decoded = JSON.parse(atob(padded));
+    console.log("✅ JWT Decoded:", decoded);
+    return decoded;
+
   } catch (error) {
+    console.log("❌ JWT Parse Failed:", error);
     return null;
   }
 }
 
 
-// 🎯 Role-Based Guard (stable version)
+// ==============================
+// ROLE ROUTE (FULL TRACE)
+// ==============================
 function RoleRoute({ role, children }) {
+  console.log("--------------------------------------------------");
+  console.log("🛡️ RoleRoute INIT for role:", role);
+
   const [checked, setChecked] = React.useState(false);
   const [allowed, setAllowed] = React.useState(false);
   const [redirectPath, setRedirectPath] = React.useState("/");
 
   React.useEffect(() => {
+    console.log("🔄 RoleRoute useEffect running...");
+
     const token = localStorage.getItem("access_token");
+    console.log("📦 Token from localStorage:", token);
 
     if (!token) {
+      console.log("❌ No token found → will redirect to /");
       setRedirectPath("/");
       setChecked(true);
       return;
     }
 
-    try {
-      const decoded = parseJwt(token);
+    const decoded = parseJwt(token);
 
-      if (!decoded || !decoded.role) {
-  localStorage.removeItem("access_token");
-  localStorage.removeItem("refresh_token");
-  setRedirectPath("/");
-} else if (decoded.role === role) {
-        setAllowed(true);
-      } else if (decoded.role === "ADMIN") {
-        setRedirectPath("/admin/dashboard");
-      } else {
-        setRedirectPath("/company/dashboard");
-      }
-    } catch {
+    if (!decoded || !decoded.role) {
+      console.log("❌ Invalid token or missing role → clearing storage");
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
       setRedirectPath("/");
+    }
+    else if (decoded.role === role) {
+      console.log("✅ Access granted. Role matches:", decoded.role);
+      setAllowed(true);
+    }
+    else if (decoded.role === "ADMIN") {
+      console.log("➡ Role mismatch → redirecting to /admin/dashboard");
+      setRedirectPath("/admin/dashboard");
+    }
+    else {
+      console.log("➡ Role mismatch → redirecting to /company/dashboard");
+      setRedirectPath("/company/dashboard");
     }
 
     setChecked(true);
   }, [role]);
 
-  // Wait until we finish checking
   if (!checked) {
-    return null; // prevents premature redirect
+    console.log("⏳ Waiting for role verification...");
+    return null;
   }
 
   if (!allowed) {
+    console.log("🚪 Navigation triggered →", redirectPath);
     return <Navigate to={redirectPath} replace />;
   }
 
+  console.log("🎉 Rendering protected content for role:", role);
   return children;
 }
 
+
+// ==============================
+// APP ROOT (Boot Log)
+// ==============================
 function App() {
+  console.log("🚀 APP MOUNTED");
+  console.log("📍 Current URL:", window.location.pathname);
+
   return (
     <BrowserRouter>
       <Routes>
@@ -175,7 +204,15 @@ function App() {
         />
 
         {/* ---------------- FALLBACK ---------------- */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route
+          path="*"
+          element={
+            (() => {
+              console.log("⚠ FALLBACK ROUTE TRIGGERED");
+              return <Navigate to="/" replace />;
+            })()
+          }
+        />
 
       </Routes>
     </BrowserRouter>
